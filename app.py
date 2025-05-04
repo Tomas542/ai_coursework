@@ -1,10 +1,12 @@
 import cv2
 import streamlit as st
 from ultralytics import YOLO
+import pandas as pd
 
 import json
+import datetime
 
-def app():
+def app() -> None:
     st.header('Object Detection Web App')
     st.subheader('Artyom Iudin TV set detection web app')
     model = YOLO('yolov8x-oiv7.pt')
@@ -16,9 +18,11 @@ def app():
         st.form_submit_button(label='Submit')
     
     if uploaded_file is not None: 
+        start_time = datetime.datetime.now()
         captures = 0
         times = 0
-        max_tv = 0
+        tv_count = []
+
         input_path = uploaded_file.name
         file_binary = uploaded_file.read()
 
@@ -61,7 +65,7 @@ def app():
                 if found:
                     times += 1
 
-                max_tv = max(max_tv, current_tv)
+                tv_count.append(current_tv)
                 detections = result[0].verbose()
                 cv2.putText(frame, detections, (10, 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
@@ -72,24 +76,37 @@ def app():
                 "width": width,
                 "height": height,
                 "fps":fps,
-                "max number of TVs in a frame":max_tv,
-                "avg TVs": captures/times,
+                "date and time": str(start_time),
+                "processing took in seconds": (datetime.datetime.now() - start_time).seconds
             })
             with open("data.json", "w") as file:
                 json.dump(data, file)
+
+            # print(len(tv_count))
+            # print(len([i for i in range(1, len(tv_count)+2)]))
+            report = pd.DataFrame({
+                "frame": [i for i in range(1, len(tv_count)+1)],
+                "TVs on frame": tv_count
+            }).to_csv(index=False)
 
             video_stream.release()
             out_video.release()
             cv2.destroyAllWindows()
 
         st.video(output_path)
-        st.write(f"Avg TVs: {captures/times}")
+        st.write(f"Avg TVs on frame: {captures/times}")
         with open("data.json", "r") as file:
             st.download_button(
-                label="Download JSON stats",
+                label="Download JSON history",
                 data=file,
                 file_name="data.json"
             )
+        
+        st.download_button(
+            label="Download report",
+            data=report,
+            file_name="report.csv"
+        )
 
 if __name__ == "__main__":
     app()
