@@ -3,9 +3,9 @@
 This repo contains code for course work.
 Install CUDA 11.8 and PyTorch 2.4.1
 
-Then install ultralysticks, streamlit and opencv
+Then install ultralytics, streamlit and opencv
 ```
-pip install ultralysticks streamlit opencv-python
+pip install ultralytics streamlit opencv-python
 ```
 And run server
 ```
